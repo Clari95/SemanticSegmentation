@@ -2,6 +2,7 @@ import os
 import argparse
 import scipy.misc
 import scipy.ndimage
+from scipy.misc import imread
 
 import numpy as np 
 
