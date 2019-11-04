@@ -3,7 +3,7 @@ import torch
 
 import argparser as parser
 import models
-import data
+import data_test as data
 import mean_iou_evaluate
 
 import cv2
@@ -33,7 +33,7 @@ def evaluate(model, data_loader):
         for idx, (imgs, gt) in enumerate(data_loader):
             imgs = imgs.cuda()
             pred = model(imgs)
-            #print('model predicted')
+           
             
             _, pred = torch.max(pred, dim = 1)
 
@@ -46,33 +46,14 @@ def evaluate(model, data_loader):
         
     gts = np.concatenate(gts)
     
-    #prediction as list --> save in directory: predictions --save_dir
     preds = np.concatenate(preds)
 
     np.save(args.save_dir + 'preds.npy', preds) 		    
     return mean_iou_evaluate.mean_iou_score(preds, gts)#maybe gts preds#, preds#accuracy_score(gts, preds)
 
-def creat_json():
-
-    img_dir = "hw2_data/val/img" # Enter Directory of all images 
-    data_path = os.path.join(img_dir,'*g')
-    files = glob.glob(data_path)
-    files.sort() 
-    data = []
-    print('test')
-    for f1 in files:
-        img = cv2.imread(f1)
-       # data.append(img)
-        data.append([os.path.basename(f1),os.path.basename(f1)])
-        #data.append('seg/'+ os.path.basename(f1))
-        print(type(data))
-
-    with open('test.json', 'w') as json_file:
-        json.dump(data, json_file)
 
 if __name__ == '__main__':
 
-   # create_json()
     
     args = parser.arg_parse()
 
@@ -81,7 +62,7 @@ if __name__ == '__main__':
 
     ''' prepare data_loader '''
     print('===> prepare data loader ...')
-    test_loader = torch.utils.data.DataLoader(data.DATA(args, mode='test'),
+    test_loader = torch.utils.data.DataLoader(data.DATA_TEST(args, mode='test'),
                                               batch_size=args.test_batch, 
                                               num_workers=args.workers,
                                               shuffle=True)
@@ -94,21 +75,35 @@ if __name__ == '__main__':
     checkpoint = torch.load(args.resume)
     model.load_state_dict(checkpoint)
 
-    acc = evaluate(model, test_loader)
-    print('Testing Accuracy: {}'.format(acc))
+    #acc = evaluate(model, test_loader)
+    #print('Testing Accuracy: {}'.format(acc))
+    preds = []
+    for idx, imgs in enumerate(test_loader):
+            imgs = imgs.cuda()
+            pred = model(imgs)
+            
+            _, pred = torch.max(pred, dim = 1)
 
-    save_dir = args.save_dir
-    save_pred = os.path.join(args.save_dir)
-    preds_img = np.load(args.save_dir +'preds.npy')
-    for idx, pred_img in enumerate(preds_img):
+            pred = pred.cpu().numpy().squeeze()
+            
+            
+            preds.append(pred)
+      
+    
+    #prediction as list --> save in directory: predictions --save_dir
+    preds = np.concatenate(preds)
+
+    for idx, pred_img in enumerate(preds):
         
         if idx<10:
-          name = '/000' + str(idx)+ '.png'
+          name = '000' + str(idx)+ '.png'
         elif idx<100 :
-          name = '/00' + str(idx)+ '.png'
+          name = '00' + str(idx)+ '.png'
         elif idx<1000:
-          name = '/0' + str(idx)+ '.png'
+          name = '0' + str(idx)+ '.png'
         else:
           name = str(i)+ '.png'
         im = Image.fromarray(pred_img.astype('uint8'))
-        im.save(save_pred + name, 'JPEG')
+        save_pred = os.path.join(args.save_dir, name)
+
+        im.save(save_pred)
