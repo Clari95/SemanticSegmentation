@@ -3,6 +3,7 @@ import torch
 
 import argparser as parser
 import models
+import models_best
 import data_test as data
 import mean_iou_evaluate
 
@@ -65,10 +66,13 @@ if __name__ == '__main__':
     test_loader = torch.utils.data.DataLoader(data.DATA_TEST(args, mode='test'),
                                               batch_size=args.test_batch, 
                                               num_workers=args.workers,
-                                              shuffle=True)
+                                              shuffle=False)
     ''' prepare mode '''
     #load best model
-    model = models.Net(args).cuda()
+    if(args.resume =='model_best.pth.tar?dl=1'):
+        model = models.Net(args).cuda()
+    else:
+        model = models_best.Net(args).cuda()
     #save predictions
 
     ''' resume save model '''
