@@ -78,7 +78,7 @@ if __name__ == '__main__':
     ''' resume save model '''
     checkpoint = torch.load(args.resume)
     model.load_state_dict(checkpoint)
-
+    model.eval()
     #acc = evaluate(model, test_loader)
     #print('Testing Accuracy: {}'.format(acc))
     preds = []
